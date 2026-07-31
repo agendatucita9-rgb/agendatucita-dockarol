@@ -49,6 +49,22 @@ export const saveAppointment = async (appointment: Appointment): Promise<void> =
   localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(apps));
 };
 
+export const deleteAppointment = async (id: string): Promise<void> => {
+  try {
+    const res = await fetch(`/api/appointments?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) {
+      return;
+    }
+  } catch (e) {
+    // Fallback
+  }
+  let apps = getAppointmentsFromLocalStorage();
+  apps = apps.filter(a => a.id !== id);
+  localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(apps));
+};
+
 export const getBlockedSlots = async (): Promise<BlockedSlot[]> => {
   try {
     const res = await fetch('/api/blocked-slots');

@@ -57,6 +57,23 @@ app.post('/api/appointments', (req, res) => {
   }
 });
 
+app.delete('/api/appointments', (req, res) => {
+  try {
+    const id = req.query.id as string;
+    if (!id) {
+      return res.status(400).json({ error: 'Falta el id de la cita' });
+    }
+    
+    let appointments = readJSONFile<any[]>(APPOINTMENTS_FILE, []);
+    appointments = appointments.filter(a => a.id !== id);
+    writeJSONFile(APPOINTMENTS_FILE, appointments);
+    
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/blocked-slots', (req, res) => {
   const slots = readJSONFile(BLOCKED_SLOTS_FILE, []);
   res.json(slots);

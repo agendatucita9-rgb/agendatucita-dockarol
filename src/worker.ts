@@ -65,6 +65,33 @@ export default {
           });
         }
       }
+
+      if (request.method === "DELETE") {
+        try {
+          const id = url.searchParams.get("id");
+          if (!id) {
+            return new Response(JSON.stringify({ error: "Falta el id de la cita" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+          }
+
+          const existingStr = (await env.DERM_STORE.get("appointments")) || "[]";
+          let existing = JSON.parse(existingStr);
+          existing = existing.filter((a: any) => a.id !== id);
+
+          await env.DERM_STORE.put("appointments", JSON.stringify(existing));
+
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          });
+        }
+      }
     }
 
     if (pathname === "/api/blocked-slots") {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Appointment, BlockedSlot, SystemSettings } from '../types';
 import { Calendar } from './Calendar';
-import { getAppointments, getBlockedSlots, saveBlockedSlot, removeBlockedSlot, TIME_SLOTS, getSystemSettings, saveSystemSettings } from '../store';
+import { getAppointments, getBlockedSlots, saveBlockedSlot, removeBlockedSlot, TIME_SLOTS, getSystemSettings, saveSystemSettings, deleteAppointment } from '../store';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LogOut, Shield, CalendarDays, Users, Ban, Trash2, Settings, Lock, CheckCircle2, Clock, Search, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
@@ -41,6 +41,23 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const [deletingApp, setDeletingApp] = useState<Appointment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingApp) return;
+    setIsDeleting(true);
+    try {
+      await deleteAppointment(deletingApp.id);
+      setDeletingApp(null);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredAndSortedAppointments = React.useMemo(() => {
     let result = [...appointments];
@@ -310,11 +327,20 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
               ) : (
                 filteredAndSortedAppointments.map(app => (
                   <div key={app.id} className="bg-white p-3.5 rounded-xl shadow-sm border border-stone-200/80">
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold text-stone-800 text-sm">{app.patientName}</h3>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-100/50">
-                        {app.time}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-100/50">
+                          {app.time}
+                        </span>
+                        <button
+                          onClick={() => setDeletingApp(app)}
+                          className="p-1.5 text-stone-400 hover:text-red-600 transition-colors rounded-lg hover:bg-stone-50"
+                          title="Eliminar cita"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                       <div className="text-stone-500">
@@ -345,18 +371,19 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                       <th className="p-4 font-medium whitespace-nowrap">F. Nacimiento</th>
                       <th className="p-4 font-medium whitespace-nowrap">Fecha de Cita</th>
                       <th className="p-4 font-medium whitespace-nowrap">Hora</th>
+                      <th className="p-4 font-medium whitespace-nowrap text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {appointments.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-stone-400">
+                        <td colSpan={6} className="p-8 text-center text-stone-400">
                           No hay citas agendadas actualmente.
                         </td>
                       </tr>
                     ) : filteredAndSortedAppointments.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-stone-400">
+                        <td colSpan={6} className="p-8 text-center text-stone-400">
                           No se encontraron citas que coincidan con la búsqueda.
                         </td>
                       </tr>
@@ -375,6 +402,15 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
                               {app.time}
                             </span>
+                          </td>
+                          <td className="p-4 whitespace-nowrap text-right">
+                            <button
+                              onClick={() => setDeletingApp(app)}
+                              className="inline-flex items-center justify-center p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar cita"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -671,6 +707,35 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
           </div>
         )}
       </main>
+
+      {deletingApp && (
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl border border-stone-100 max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-stone-800 mb-2">¿Eliminar esta cita?</h3>
+            <p className="text-sm text-stone-500 mb-4">
+              ¿Estás seguro de que deseas eliminar permanentemente la cita de <strong className="text-stone-800 font-semibold">{deletingApp.patientName}</strong> el día <strong className="text-stone-800 font-semibold">{format(parseISO(deletingApp.date), "EEEE, d 'de' MMMM", { locale: es })}</strong> a las <strong className="text-stone-800 font-semibold">{deletingApp.time}</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingApp(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-stone-600 hover:bg-stone-50 border border-stone-200 rounded-lg text-xs md:text-sm font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs md:text-sm font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                {isDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
