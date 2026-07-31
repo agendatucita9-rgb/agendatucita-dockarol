@@ -120,8 +120,7 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
           <div className="w-16 h-16 bg-stone-100 text-stone-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Shield size={32} />
           </div>
-          <h1 className="text-2xl font-semibold text-center text-stone-800 mb-2">Acceso Administrativo</h1>
-          <p className="text-stone-500 text-center mb-8">Usa 'karol' / '1234' para entrar.</p>
+          <h1 className="text-2xl font-semibold text-center text-stone-800 mb-8">Acceso Administrativo</h1>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
