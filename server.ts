@@ -34,7 +34,77 @@ function writeJSONFile<T>(filePath: string, data: T): void {
   }
 }
 
+function formatSpanishDate(dateStr: string): string {
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // 0-indexed
+    const day = parseInt(parts[2], 10);
+    
+    const date = new Date(Date.UTC(year, month, day));
+    
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    const days = [
+      'domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'
+    ];
+    
+    const dayName = days[date.getUTCDay()];
+    const monthName = months[date.getUTCMonth()];
+    
+    return `${day} de ${monthName} de ${year} (${dayName})`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 // API Routes
+async function sendTelegramNotification(appointment: any) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!botToken || !chatId) {
+    console.log("Notificaciones de Telegram no configuradas (TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID faltantes).");
+    return;
+  }
+
+  const formattedDate = formatSpanishDate(appointment.date);
+
+  const message = `🩺 *¡Nueva Cita Dermatológica!*
+
+👤 *Paciente:* ${appointment.patientName}
+📅 *F. Nacimiento:* ${appointment.patientDob}
+📞 *Teléfono:* ${appointment.patientPhone}
+📆 *Fecha de Cita:* ${formattedDate}
+🕒 *Hora:* ${appointment.time}`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Error al enviar notificación a Telegram:", await response.text());
+    } else {
+      console.log("Notificación de Telegram enviada con éxito.");
+    }
+  } catch (error) {
+    console.error("Error al enviar notificación de Telegram:", error);
+  }
+}
+
 app.get('/api/appointments', (req, res) => {
   const appointments = readJSONFile(APPOINTMENTS_FILE, []);
   res.json(appointments);
@@ -50,6 +120,11 @@ app.post('/api/appointments', (req, res) => {
     const appointments = readJSONFile<any[]>(APPOINTMENTS_FILE, []);
     appointments.push(appointment);
     writeJSONFile(APPOINTMENTS_FILE, appointments);
+    
+    // Enviar notificación sin bloquear la respuesta principal
+    sendTelegramNotification(appointment).catch(err => {
+      console.error("Error asíncrono en sendTelegramNotification:", err);
+    });
     
     res.json({ success: true, appointment });
   } catch (err: any) {
