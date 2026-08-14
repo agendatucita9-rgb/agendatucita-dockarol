@@ -469,7 +469,7 @@ export function ClientInterface() {
           await navigator.share({
             files: [file],
             title: 'Mi Cita Dermatológica',
-            text: `Hola Dra. Karol, adjunto el comprobante de mi cita agendada.`,
+            text: `Hola Dra. Karol: adjunto el comprobante de mi cita agendada.`,
           });
         } else {
           // Fallback: Download file
@@ -535,7 +535,7 @@ export function ClientInterface() {
               className="w-full py-3 px-4 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 text-white font-medium rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-sm"
             >
               <Download size={16} />
-              {isSharingImage ? 'Generando imagen...' : (navigator.share ? 'Compartir Imagen / Screenshot' : 'Descargar Imagen / Screenshot')}
+              {isSharingImage ? 'Generando imagen...' : (navigator.share ? 'Compartir confirmación de cita' : 'Descargar Imagen / Screenshot')}
             </button>
           </div>
         </div>
