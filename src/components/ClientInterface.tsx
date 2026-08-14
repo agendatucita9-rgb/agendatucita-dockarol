@@ -4,7 +4,7 @@ import { Calendar } from './Calendar';
 import { getAppointments, getBlockedSlots, saveAppointment, TIME_SLOTS, getSystemSettings } from '../store';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { LogOut, CheckCircle2, User as UserIcon, Calendar as CalendarIcon, Clock, MapPin, CreditCard, Info, X, ArrowLeft } from 'lucide-react';
+import { LogOut, CheckCircle2, User as UserIcon, Calendar as CalendarIcon, Clock, MapPin, CreditCard, Info, X, ArrowLeft, Share2, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
@@ -27,6 +27,7 @@ export function ClientInterface() {
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({ blockedDaysOfWeek: [], blockedHours: [], blockedSaturdayHours: [] });
   
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [isSharingImage, setIsSharingImage] = useState(false);
 
   // Days completely blocked or fully booked (no slots available)
   const blockedDays = React.useMemo(() => {
@@ -314,47 +315,229 @@ export function ClientInterface() {
       return `${hour12}:${minuteStr} ${ampm}`;
     };
 
+    const formattedDateText = selectedDate ? (() => {
+      const dateStr = format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es });
+      const dayName = format(selectedDate, "EEEE", { locale: es }).toLowerCase();
+      return `${dateStr} (${dayName})`;
+    })() : '';
+
+    const formattedTimeText = formatTimeTo12h(selectedTime);
+
+    const generateCanvasBlob = (): Promise<Blob> => {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 540;
+        canvas.height = 580;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('No se pudo obtener el contexto del canvas'));
+          return;
+        }
+
+        // Draw custom rounded rect helper
+        const drawRoundRect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+          c.beginPath();
+          c.moveTo(x + r, y);
+          c.lineTo(x + w - r, y);
+          c.quadraticCurveTo(x + w, y, x + w, y + r);
+          c.lineTo(x + w, y + h - r);
+          c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+          c.lineTo(x + r, y + h);
+          c.quadraticCurveTo(x, y + h, x, y + h - r);
+          c.lineTo(x, y + r);
+          c.quadraticCurveTo(x, y, x + r, y);
+          c.closePath();
+        };
+
+        // Background (Soft warm stone light background)
+        ctx.fillStyle = '#F5F5F4';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Elegant Card shadow/glow simulated
+        ctx.shadowColor = 'rgba(120, 113, 108, 0.08)';
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetY = 6;
+
+        // Card Container background
+        ctx.fillStyle = '#FFFFFF';
+        drawRoundRect(ctx, 24, 24, canvas.width - 48, canvas.height - 48, 24);
+        ctx.fill();
+
+        // Reset shadows for content
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Draw elegant card outer border
+        ctx.strokeStyle = '#E7E5E4';
+        ctx.lineWidth = 1.5;
+        drawRoundRect(ctx, 24, 24, canvas.width - 48, canvas.height - 48, 24);
+        ctx.stroke();
+
+        // Circle background for checkmark
+        ctx.fillStyle = '#F7F2F2'; // soft pinkish cream
+        ctx.beginPath();
+        ctx.arc(270, 110, 38, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Circle border
+        ctx.strokeStyle = '#C28282'; // Rose dusty color
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(270, 110, 38, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Check icon inside circle
+        ctx.strokeStyle = '#C28282';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(270 - 12, 110 - 1);
+        ctx.lineTo(270 - 2, 110 + 9);
+        ctx.lineTo(270 + 13, 110 - 9);
+        ctx.stroke();
+
+        // Title "¡Cita Confirmada!"
+        ctx.fillStyle = '#1C1917'; // stone-900
+        ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('¡Cita Confirmada!', 270, 190);
+
+        // Inner Details Box Container
+        ctx.fillStyle = '#FAF9F8';
+        drawRoundRect(ctx, 54, 230, 432, 230, 16);
+        ctx.fill();
+        ctx.strokeStyle = '#F1F0EE';
+        ctx.lineWidth = 1;
+        drawRoundRect(ctx, 54, 230, 432, 230, 16);
+        ctx.stroke();
+
+        // Text inside Details Box
+        // Title: "Detalles de tu reserva:"
+        ctx.fillStyle = '#1C1917';
+        ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Detalles de tu reserva:', 270, 272);
+
+        const drawDetailRow = (label: string, value: string, y: number) => {
+          ctx.fillStyle = '#78716C'; // stone-500
+          ctx.font = '500 14px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(label, 86, y);
+
+          ctx.fillStyle = '#1C1917'; // stone-900
+          ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(value, 454, y);
+        };
+
+        const drawDivider = (y: number) => {
+          ctx.strokeStyle = '#E7E5E4';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(86, y);
+          ctx.lineTo(454, y);
+          ctx.stroke();
+        };
+
+        drawDetailRow('Servicio:', 'Consulta dermatológica', 325);
+        drawDivider(343);
+        drawDetailRow('Fecha:', formattedDateText, 375);
+        drawDivider(393);
+        drawDetailRow('Hora:', formattedTimeText, 425);
+
+        // Convert to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('No se pudo generar la imagen'));
+          }
+        }, 'image/png');
+      });
+    };
+
+    const handleShareOrDownload = async () => {
+      if (isSharingImage) return;
+      setIsSharingImage(true);
+      try {
+        const blob = await generateCanvasBlob();
+        const file = new File([blob], 'comprobante_cita.png', { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Mi Cita Dermatológica',
+            text: `Hola Dra. Karol, adjunto el comprobante de mi cita agendada.`,
+          });
+        } else {
+          // Fallback: Download file
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `comprobante_cita_${user?.name.trim().replace(/\s+/g, '_') || 'reserva'}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        console.error('Error al generar o compartir el comprobante:', error);
+      } finally {
+        setIsSharingImage(false);
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-stone-50 p-4 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100 w-full max-w-md text-center">
-          <CheckCircle2 className="w-20 h-20 text-brand-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-semibold text-stone-800 mb-2">¡Cita Confirmada!</h2>
+      <div className="min-h-screen bg-stone-50 p-4 flex items-center justify-center animate-in fade-in duration-300">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-stone-100 w-full max-w-md text-center">
+          <CheckCircle2 className="w-16 h-16 text-brand-500 mx-auto mb-5" />
+          <h2 className="text-2xl font-semibold text-stone-800 mb-1">¡Cita Confirmada!</h2>
+          <p className="text-stone-500 text-xs mb-6">Guarda el comprobante de tu reserva para presentarlo en recepción</p>
           
-          <div className="text-stone-600 mb-8 bg-stone-50 p-6 rounded-2xl border border-stone-100">
-            <p className="font-semibold text-stone-800 mb-4 text-center text-base">Detalles de tu reserva:</p>
+          <div className="text-stone-600 mb-6 bg-stone-50 p-5 rounded-2xl border border-stone-100">
+            <p className="font-semibold text-stone-800 mb-3 text-center text-sm">Detalles de tu reserva:</p>
             
-            <div className="max-w-[320px] mx-auto space-y-3.5 text-left">
-              <div className="flex justify-between items-center text-sm border-b border-stone-200/50 pb-2.5 gap-4">
+            <div className="max-w-[320px] mx-auto space-y-3 text-left">
+              <div className="flex justify-between items-center text-xs sm:text-sm border-b border-stone-200/50 pb-2 gap-4">
                 <span className="text-stone-500 font-medium">Servicio:</span>
                 <span className="font-semibold text-stone-800 text-right">Consulta dermatológica</span>
               </div>
               
-              <div className="flex justify-between items-center text-sm border-b border-stone-200/50 pb-2.5 gap-4">
+              <div className="flex justify-between items-center text-xs sm:text-sm border-b border-stone-200/50 pb-2 gap-4">
                 <span className="text-stone-500 font-medium">Fecha:</span>
                 <span className="font-semibold text-stone-800 text-right">
-                  {selectedDate && (() => {
-                    const dateStr = format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es });
-                    const dayName = format(selectedDate, "EEEE", { locale: es }).toLowerCase();
-                    return `${dateStr} (${dayName})`;
-                  })()}
+                  {formattedDateText}
                 </span>
               </div>
               
-              <div className="flex justify-between items-center text-sm gap-4">
+              <div className="flex justify-between items-center text-xs sm:text-sm gap-4">
                 <span className="text-stone-500 font-medium">Hora:</span>
                 <span className="font-semibold text-stone-800 text-right">
-                  {formatTimeTo12h(selectedTime)}
+                  {formattedTimeText}
                 </span>
               </div>
             </div>
           </div>
 
-          <button 
-            onClick={resetBooking}
-            className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors"
-          >
-            Finalizar
-          </button>
+          <div className="space-y-2.5">
+            <button 
+              onClick={resetBooking}
+              className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors border border-brand-700/10 text-sm"
+            >
+              Finalizar
+            </button>
+
+            <button
+              onClick={handleShareOrDownload}
+              disabled={isSharingImage}
+              className="w-full py-3 px-4 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 text-white font-medium rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-sm"
+            >
+              <Download size={16} />
+              {isSharingImage ? 'Generando imagen...' : (navigator.share ? 'Compartir Imagen / Screenshot' : 'Descargar Imagen / Screenshot')}
+            </button>
+          </div>
         </div>
       </div>
     );
