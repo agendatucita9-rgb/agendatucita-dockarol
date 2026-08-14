@@ -469,7 +469,7 @@ export function ClientInterface() {
           await navigator.share({
             files: [file],
             title: 'Mi Cita Dermatológica',
-            text: `Hola Dra. Karol: adjunto el comprobante de mi cita agendada.`,
+            text: `Dra. Karol Talavera: adjunto la confirmación de mi cita`,
           });
         } else {
           // Fallback: Download file
