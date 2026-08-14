@@ -326,13 +326,17 @@ export function ClientInterface() {
     const generateCanvasBlob = (): Promise<Blob> => {
       return new Promise((resolve, reject) => {
         const canvas = document.createElement('canvas');
-        canvas.width = 540;
-        canvas.height = 580;
+        const scale = 3; // 3x ultra-high-definition scaling (1620x1740)
+        canvas.width = 540 * scale;
+        canvas.height = 580 * scale;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('No se pudo obtener el contexto del canvas'));
           return;
         }
+
+        // Auto-scale all context drawing commands
+        ctx.scale(scale, scale);
 
         // Draw custom rounded rect helper
         const drawRoundRect = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
@@ -493,8 +497,7 @@ export function ClientInterface() {
       <div className="min-h-screen bg-stone-50 p-4 flex items-center justify-center animate-in fade-in duration-300">
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-stone-100 w-full max-w-md text-center">
           <CheckCircle2 className="w-16 h-16 text-brand-500 mx-auto mb-5" />
-          <h2 className="text-2xl font-semibold text-stone-800 mb-1">¡Cita Confirmada!</h2>
-          <p className="text-stone-500 text-xs mb-6">Guarda el comprobante de tu reserva para presentarlo en recepción</p>
+          <h2 className="text-2xl font-semibold text-stone-800 mb-6">¡Cita Confirmada!</h2>
           
           <div className="text-stone-600 mb-6 bg-stone-50 p-5 rounded-2xl border border-stone-100">
             <p className="font-semibold text-stone-800 mb-3 text-center text-sm">Detalles de tu reserva:</p>
@@ -522,13 +525,6 @@ export function ClientInterface() {
           </div>
 
           <div className="space-y-2.5">
-            <button 
-              onClick={resetBooking}
-              className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors border border-brand-700/10 text-sm"
-            >
-              Finalizar
-            </button>
-
             <button
               onClick={handleShareOrDownload}
               disabled={isSharingImage}
@@ -536,6 +532,13 @@ export function ClientInterface() {
             >
               <Download size={16} />
               {isSharingImage ? 'Generando imagen...' : (navigator.share ? 'Compartir confirmación de cita' : 'Descargar Imagen / Screenshot')}
+            </button>
+
+            <button 
+              onClick={resetBooking}
+              className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors border border-brand-700/10 text-sm"
+            >
+              Finalizar
             </button>
           </div>
         </div>
