@@ -5,6 +5,8 @@ export interface Appointment {
   patientPhone: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
+  serviceName?: string;
+  duration?: number; // 1 or 2
 }
 
 export interface BlockedSlot {

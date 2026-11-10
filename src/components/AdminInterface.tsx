@@ -328,7 +328,12 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                 filteredAndSortedAppointments.map(app => (
                   <div key={app.id} className="bg-white p-3.5 rounded-xl shadow-sm border border-stone-200/80">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-stone-800 text-sm">{app.patientName}</h3>
+                      <div>
+                        <h3 className="font-semibold text-stone-800 text-sm">{app.patientName}</h3>
+                        <span className="text-[11px] text-brand-700 font-medium bg-brand-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                          {app.serviceName || 'Consulta dermatológica'}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1.5">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-100/50">
                           {app.time}
@@ -367,6 +372,7 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                   <thead>
                     <tr className="bg-stone-50 text-stone-500 text-sm border-b border-stone-200">
                       <th className="p-4 font-medium whitespace-nowrap">Paciente</th>
+                      <th className="p-4 font-medium whitespace-nowrap">Servicio</th>
                       <th className="p-4 font-medium whitespace-nowrap">Teléfono</th>
                       <th className="p-4 font-medium whitespace-nowrap">F. Nacimiento</th>
                       <th className="p-4 font-medium whitespace-nowrap">Fecha de Cita</th>
@@ -377,13 +383,13 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                   <tbody className="divide-y divide-stone-100">
                     {appointments.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-stone-400">
+                        <td colSpan={7} className="p-8 text-center text-stone-400">
                           No hay citas agendadas actualmente.
                         </td>
                       </tr>
                     ) : filteredAndSortedAppointments.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-stone-400">
+                        <td colSpan={7} className="p-8 text-center text-stone-400">
                           No se encontraron citas que coincidan con la búsqueda.
                         </td>
                       </tr>
@@ -391,6 +397,11 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                       filteredAndSortedAppointments.map(app => (
                         <tr key={app.id} className="hover:bg-stone-50 transition-colors">
                           <td className="p-4 font-medium text-stone-800 whitespace-nowrap">{app.patientName}</td>
+                          <td className="p-4 text-stone-600 text-sm whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-brand-50 text-brand-700">
+                              {app.serviceName || 'Consulta dermatológica'}
+                            </span>
+                          </td>
                           <td className="p-4 text-stone-600 text-sm whitespace-nowrap">{app.patientPhone}</td>
                           <td className="p-4 text-stone-500 text-sm whitespace-nowrap">
                             {app.patientDob} <span className="text-stone-400 font-normal">({calculateAge(app.patientDob)})</span>
@@ -399,7 +410,7 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                             {format(parseISO(app.date), "EEE, d MMM yyyy", { locale: es })}
                           </td>
                           <td className="p-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-stone-100 text-stone-700">
                               {app.time}
                             </span>
                           </td>
@@ -479,9 +490,14 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {TIME_SLOTS.map(time => {
+                        {TIME_SLOTS.map((time, idx) => {
                           const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                          const bookedAppointment = appointments.find(a => a.date === dateStr && a.time === time);
+                          const bookedAppointment = appointments.find(a => {
+                            if (a.date !== dateStr) return false;
+                            const aDur = a.duration || 1;
+                            const aStart = TIME_SLOTS.indexOf(a.time);
+                            return idx >= aStart && idx < aStart + aDur;
+                          });
                           const isBlocked = blockedSlots.some(s => s.date === dateStr && s.time === time);
                           
                           if (bookedAppointment) {
@@ -489,7 +505,7 @@ export function AdminInterface({ onLogout }: { onLogout: () => void }) {
                               <div key={time} className="py-2 px-1.5 rounded-lg text-xs font-semibold border border-brand-200 bg-brand-50 text-brand-700 flex flex-col items-center justify-center relative opacity-80 cursor-not-allowed text-center">
                                 {time}
                                 <span className="text-[9px] mt-0.5 text-brand-600 truncate w-full px-1" title={bookedAppointment.patientName}>
-                                  {bookedAppointment.patientName}
+                                  {bookedAppointment.patientName} ({bookedAppointment.serviceName || 'Consulta'})
                                 </span>
                               </div>
                             );
