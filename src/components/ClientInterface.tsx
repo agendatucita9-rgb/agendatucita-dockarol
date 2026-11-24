@@ -4,10 +4,12 @@ import { Calendar } from './Calendar';
 import { getAppointments, getBlockedSlots, saveAppointment, TIME_SLOTS, getSystemSettings } from '../store';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CheckCircle2, Calendar as CalendarIcon, Clock, MapPin, CreditCard, Info, X, ArrowLeft, Download, Stethoscope, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Calendar as CalendarIcon, Clock, MapPin, CreditCard, Info, X, ArrowLeft, Download, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { DurationBadge } from './DurationBadge';
+import { ConsultaIcon } from './ConsultaIcon';
+import { ReconsultaIcon } from './ReconsultaIcon';
 import { ProcedureIcon } from './ProcedureIcon';
 import { CrioterapiaIcon } from './CrioterapiaIcon';
 import { ElectrocirugiaIcon } from './ElectrocirugiaIcon';
@@ -30,8 +32,8 @@ export interface ServiceItem {
 }
 
 export const SERVICES: ServiceItem[] = [
-  { id: 'consulta', name: 'Consulta dermatológica', duration: 1, category: 'consulta', description: 'Evaluación dermatológica integral y diagnóstico' },
-  { id: 'reconsulta', name: 'Reconsulta dermatológica', duration: 1, category: 'reconsulta', description: 'Control de seguimiento y evaluación de tratamiento' },
+  { id: 'consulta', name: 'Consulta dermatológica', duration: 1, category: 'consulta', description: 'Evaluación integral, diagnóstico y tratamiento' },
+  { id: 'reconsulta', name: 'Reconsulta dermatológica', duration: 1, category: 'reconsulta', description: 'Seguimiento de la evolución y ajuste del tratamiento' },
   { id: 'crioterapia', name: 'Crioterapia', duration: 1, category: 'procedimiento', description: 'Tratamiento con nitrógeno líquido' },
   { id: 'electrocirugia', name: 'Electrocirugía', duration: 1, category: 'procedimiento', description: 'Eliminación de lesiones cutáneas por corriente eléctrica' },
   { id: 'peeling', name: 'Peeling químico', duration: 1, category: 'procedimiento', description: 'Renovación celular y exfoliación química' },
@@ -403,8 +405,7 @@ export function ClientInterface() {
 
         <main className="max-w-xl mx-auto px-4 py-6 sm:py-10">
           <div className="text-center mb-6 sm:mb-8 text-white">
-            <h1 className="text-xl sm:text-2xl font-bold mb-1 drop-shadow-xs">Selecciona el tipo de atención</h1>
-            <p className="text-white/90 text-xs sm:text-sm">Elige el servicio o procedimiento que necesitas realizarte</p>
+            <h1 className="text-xl sm:text-2xl font-bold drop-shadow-xs">Seleccione el tipo de atención que desea recibir</h1>
           </div>
 
           <div className="space-y-4 sm:space-y-5">
@@ -415,7 +416,7 @@ export function ClientInterface() {
             >
               <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                 <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform" style={{ backgroundColor: '#e5aca5' }}>
-                  <Stethoscope size={28} className="text-white" />
+                  <ConsultaIcon className="w-11 h-11 sm:w-14 sm:h-14 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-stone-900 text-base sm:text-lg group-hover:text-brand-700 transition-colors leading-tight">
@@ -424,7 +425,6 @@ export function ClientInterface() {
                   <p className="text-stone-500 text-xs sm:text-sm mt-1 line-clamp-2">{consultaService.description}</p>
                 </div>
               </div>
-              <DurationBadge duration={1} />
             </button>
 
             {/* Card 2: Reconsulta dermatológica */}
@@ -434,7 +434,7 @@ export function ClientInterface() {
             >
               <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                 <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform" style={{ backgroundColor: '#c89582' }}>
-                  <Clock size={28} className="text-white" />
+                  <ReconsultaIcon className="w-11 h-11 sm:w-14 sm:h-14 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-stone-900 text-base sm:text-lg group-hover:text-brand-700 transition-colors leading-tight">
@@ -443,7 +443,6 @@ export function ClientInterface() {
                   <p className="text-stone-500 text-xs sm:text-sm mt-1 line-clamp-2">{reconsultaService.description}</p>
                 </div>
               </div>
-              <DurationBadge duration={1} />
             </button>
 
             {/* Card 3: Procedimientos (Opens Mosaic Modal) */}
@@ -453,16 +452,15 @@ export function ClientInterface() {
             >
               <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
                 <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform" style={{ backgroundColor: '#bf815e' }}>
-                  <ProcedureIcon className="w-8 h-8 sm:w-11 sm:h-11 text-white" />
+                  <ProcedureIcon className="w-11 h-11 sm:w-14 sm:h-14 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-stone-900 text-base sm:text-lg group-hover:text-brand-700 transition-colors leading-tight">
                     Procedimientos
                   </h3>
-                  <p className="text-stone-500 text-xs sm:text-sm mt-1 line-clamp-2">Crioterapia, Electrocirugía, Peeling, Dermapen y más</p>
+                  <p className="text-stone-500 text-xs sm:text-sm mt-1 line-clamp-2">Electrocirugía, crioterapia, peeling, limpieza facial, micropunción y más</p>
                 </div>
               </div>
-              <DurationBadge duration="1-2" unit="HORAS" />
             </button>
           </div>
         </main>
@@ -474,7 +472,7 @@ export function ClientInterface() {
               <div className="bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-stone-200 flex items-center justify-between sticky top-0 z-10">
                 <div>
                   <h2 className="text-base sm:text-xl font-bold text-stone-900">Procedimientos dermatológicos</h2>
-                  <p className="text-[11px] sm:text-xs text-stone-500">Selecciona el procedimiento que deseas realizarte</p>
+                  <p className="text-[11px] sm:text-xs text-stone-500">Seleccione el procedimiento de su preferencia</p>
                 </div>
                 <button
                   onClick={() => setShowProceduresModal(false)}
@@ -507,7 +505,7 @@ export function ClientInterface() {
                             ) : proc.id === 'electrocirugia' ? (
                               <ElectrocirugiaIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
                             ) : proc.id === 'peeling' ? (
-                              <PeelingQuimicoIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
+                              <PeelingQuimicoIcon className="w-11 h-11 sm:w-[60px] sm:h-[60px] text-white" />
                             ) : proc.id === 'dermapen_vitaminas' ? (
                               <DermapenVitaminasIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
                             ) : proc.id === 'dermapen_exosomas' ? (
@@ -515,7 +513,7 @@ export function ClientInterface() {
                             ) : proc.id === 'dermapen_capilar' ? (
                               <DermapenCapilarIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
                             ) : proc.id === 'limpieza_facial' ? (
-                              <LimpiezaFacialIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
+                              <LimpiezaFacialIcon className="w-11 h-11 sm:w-[60px] sm:h-[60px] text-white" />
                             ) : proc.id === 'reseccion_punch' ? (
                               <ReseccionPunchIcon className="w-9 h-9 sm:w-12 sm:h-12 text-white" />
                             ) : proc.id === 'plasma_pen' ? (
@@ -535,12 +533,11 @@ export function ClientInterface() {
                         </div>
                       </div>
 
-                      {/* 3. Divider line + Centered 'Elegir' text */}
-                      <div className="mt-2 sm:mt-3">
-                        <div className="border-t border-[#e5aca5]/80 w-full" />
-                        <div className="text-center pt-1.5 sm:pt-2">
-                          <span className="text-xs sm:text-sm font-bold text-[#c4827b] group-hover:text-[#a85f57] transition-colors">
-                            Elegir
+                      {/* 3. Rounded 'Seleccionar' button */}
+                      <div className="mt-2.5 sm:mt-3.5">
+                        <div className="w-full py-1.5 sm:py-2 px-3 rounded-xl sm:rounded-2xl bg-[#fdf2f1] border border-[#e5aca5]/80 group-hover:bg-[#e5aca5] group-hover:border-[#e5aca5] text-center transition-all shadow-2xs">
+                          <span className="text-xs sm:text-sm font-bold text-[#c4827b] group-hover:text-white transition-colors">
+                            Seleccionar
                           </span>
                         </div>
                       </div>
@@ -992,9 +989,9 @@ export function ClientInterface() {
                         const isAvailable = status === 'available';
                         const isSelected = selectedTime === time;
 
-                        // If duration is 2, check if next slot exists in TIME_SLOTS
-                        if (duration === 2 && idx + 1 >= TIME_SLOTS.length) {
-                          return null; // Cannot start 2-hr procedure at the very last slot
+                        // If duration is 2, only show slots with a 2-hour range within TIME_SLOTS
+                        if (duration === 2 && idx + 2 >= TIME_SLOTS.length) {
+                          return null;
                         }
                         
                         const endSlotTime = duration === 2 ? TIME_SLOTS[idx + 2] || '' : '';
