@@ -574,7 +574,7 @@ export function ClientInterface() {
       : (selectedTime ? `${parseInt(selectedTime.split(':')[0]) + serviceDuration}:00` : '');
 
     const formattedTimeText = serviceDuration === 2 && selectedTime && endSlotTime
-      ? `${selectedTime} a ${endSlotTime}`
+      ? `${formatTimeTo12h(selectedTime)} a ${formatTimeTo12h(endSlotTime)}`
       : formatTimeTo12h(selectedTime);
 
     const generateCanvasBlob = (mimeType: string = 'image/jpeg'): Promise<Blob> => {
@@ -851,7 +851,7 @@ export function ClientInterface() {
               className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 text-sm"
             >
               <Download size={16} />
-              {isSharingImage ? 'Generando JPG...' : 'Descargar confirmación en JPG'}
+              {isSharingImage ? 'Descargando...' : 'Descargar confirmación'}
             </button>
 
             <div className="pt-4 pb-1 flex flex-col items-center">
